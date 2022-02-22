@@ -1,5 +1,7 @@
-import React, {Component} from "react";
+import React, { Component } from "react";
+
 import Searchbar from "./Searchbar";
+import ImageGallery from "./ImageGallery";
 
 export default class App extends Component {
   state = {
@@ -25,7 +27,9 @@ export default class App extends Component {
         }}
       >
         {/* React homework template */}
-        <Searchbar onSubmit={(searchObject) => {this.onSearch(searchObject)} }></Searchbar>
+        <Searchbar onSubmit={(searchObject) => { this.onSearch(searchObject) }}></Searchbar>
+        
+        {this.state.searchString && <ImageGallery searchString={this.state.searchString }/>}
       </div>
     );
   } 
