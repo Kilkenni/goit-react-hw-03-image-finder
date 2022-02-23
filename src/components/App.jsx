@@ -10,7 +10,6 @@ export default class App extends Component {
 
   onSearch = (searchObject) => {
     this.setState(searchObject);
-    //TODO search
   }
 
   render() {

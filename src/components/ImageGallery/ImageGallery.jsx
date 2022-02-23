@@ -4,10 +4,9 @@ import propTypes from "prop-types";
 import ImageGalleryItem from "../ImageGalleryItem";
 import Button from "components/Button";
 import Loader from "components/Loader";
+import Modal from "components/Modal";
 import PixabayFetch from "js/Pixabay";
 import styles from "./ImageGallery.module.css";
-
-
 
 class ImageGallery extends Component {
     state = {
@@ -16,9 +15,61 @@ class ImageGallery extends Component {
         imageDataArray: [],
         error: null,
         status: "idle", // idle|loading|error|success
+        showModalImage: false,
+        modalImageId: undefined,
     }
 
     pixabayFetcher = new PixabayFetch();
+
+    async componentDidMount() {
+        this.pixabayFetcher.setSearch(this.props.searchString);
+        await this.fetchImages();     
+    }
+
+    async componentDidUpdate(prevProps, prevState) {
+        if (prevProps.searchString !== this.props.searchString) {
+            this.pixabayFetcher.setSearch(this.props.searchString);
+            this.setState({ page: 1 }); //reset page to 1
+            await this.fetchImages();
+        }
+        else if (prevState.page !== this.state.page) {
+            await this.fetchImages();
+            // console.log(`New search string: ${this.props.searchString}`)
+        }
+    }
+
+    componentWillUnmount() {
+        this.pixabayFetcher.abortFetch();
+    }
+
+    toggleModal = (event = null) => {
+        let imageId = undefined;
+
+        if (event) {
+            
+            let nodeObject = event.target;
+            if (event.target.nodeName === "UL") {
+                return; //ignore clicks in parent DOM element
+            }
+
+            while (!imageId) {
+                if (nodeObject.nodeName === "LI") {
+                    imageId = nodeObject.dataset.id;
+                }
+                else {
+                    nodeObject = nodeObject.parentNode;
+                }
+            }
+        }
+        
+        this.setState((prevState) => {
+            return {
+                showModalImage: !prevState.showModalImage,
+                modalImageId: imageId,
+            }
+        });
+    }
+    
 
     nextPage = () => {
         //switch to next page only if there is one
@@ -52,27 +103,6 @@ class ImageGallery extends Component {
         }
     }
 
-    async componentDidMount() {
-        this.pixabayFetcher.setSearch(this.props.searchString);
-        await this.fetchImages();     
-    }
-
-    async componentDidUpdate(prevProps, prevState) {
-        if (prevProps.searchString !== this.props.searchString) {
-            this.pixabayFetcher.setSearch(this.props.searchString);
-            this.setState({ page: 1 }); //reset page to 1
-            await this.fetchImages();
-        }
-        else if (prevState.page !== this.state.page) {
-            await this.fetchImages();
-            // console.log(`New search string: ${this.props.searchString}`)
-        }
-    }
-
-    componentWillUnmount() {
-        this.pixabayFetcher.abortFetch();
-    }
-
     render() {
         const { imageDataArray, imagesFound } = this.state;
         
@@ -81,17 +111,33 @@ class ImageGallery extends Component {
                 return <></>;
             case "loading":
                 return <Loader />;
-            case "error": 
+            case "error":
                 return <p>{this.state.error.message}</p>;
-            case "success": 
+            case "success": {
+                let imageForModal = {};
+                if (this.state.modalImageId) {
+                    imageForModal = this.state.imageDataArray.find((imageData) => {
+                        return imageData.id.toString() === this.state.modalImageId;
+                    });
+                    //we need either toString or non-strict comparison to make this work. imageData.id from Pixabay is a number and modalImageId is a string (it's being read from a data attribute from DOM).
+                }
+
+                const { largeImageURL, tags } = imageForModal;
+                
                 return (<>
-                    <ul className={styles.ImageGallery}>
+                    <ul className={styles.ImageGallery} onClick={this.toggleModal}>
                         {imageDataArray.map((imageData) => <ImageGalleryItem imageData={imageData} key={imageData.id} />)}
                     </ul>
+
                     {(imageDataArray.length > 0) && <Button onLoadMore={this.nextPage}
-                        disabled={ !(imagesFound > imageDataArray.length)}/>}
+                        disabled={!(imagesFound > imageDataArray.length)} />}
+                    
+                    {this.state.showModalImage && <Modal onClose={this.toggleModal}>
+                        <img src={largeImageURL} alt={ tags } loading="lazy"/>
+                    </Modal>}
                 </>
-                    );
+                );
+            }
             default:
                 throw new Error("Incorrect status in state of component <ImageGallery>");
         }

@@ -6,7 +6,7 @@ const ImageGalleryItem = ({ imageData }) => {
     const { webformatURL, tags} = imageData;
 
     return (
-        <li className={styles.ImageGalleryItem}>
+        <li className={styles.ImageGalleryItem} data-id={imageData.id}>
             <img src={webformatURL} alt={tags} loading="lazy" className={ styles["ImageGalleryItem-image"]}/>
         </li>
     );
@@ -17,6 +17,7 @@ ImageGalleryItem.propTypes = {
         // id: propTypes.number.isRequired,
         webformatURL: propTypes.string.isRequired,
         tags: propTypes.string.isRequired,
+        id: propTypes.number.isRequired,
     }).isRequired,
 }
 
