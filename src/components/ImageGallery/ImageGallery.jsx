@@ -35,6 +35,11 @@ class ImageGallery extends Component {
         else if (prevState.page !== this.state.page) {
             await this.fetchImages();
             // console.log(`New search string: ${this.props.searchString}`)
+
+            //soft scrolling uses Ref assigned to UL element in render()
+            const cardHeight = this.galleryElem.firstElementChild.clientHeight;
+            //alternative: this.galleryElem.firstElementChild.getBoundingClientRect().height;
+            window.scrollBy({ top: cardHeight * 2 * (this.state.page - 1), behavior: "smooth", }); //scrolling down by 2 rows
         }
     }
 
@@ -125,7 +130,7 @@ class ImageGallery extends Component {
                 const { largeImageURL, tags } = imageForModal;
                 
                 return (<>
-                    <ul className={styles.ImageGallery} onClick={this.toggleModal}>
+                    <ul className={styles.ImageGallery} onClick={this.toggleModal} ref={(galleryUL) => { this.galleryElem = galleryUL }}>
                         {imageDataArray.map((imageData) => <ImageGalleryItem imageData={imageData} key={imageData.id} />)}
                     </ul>
 
