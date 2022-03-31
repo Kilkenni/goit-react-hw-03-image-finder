@@ -103,6 +103,7 @@ class ImageGallery extends Component {
                 });
             }
             this.setState({ error: null, status: "success" });
+            console.log(this.state.imageDataArray);
         } catch (error) {
             this.setState({ error, status: "error" });    
         }
@@ -115,9 +116,6 @@ class ImageGallery extends Component {
             case "idle":
                 return <></>;
             case "loading":
-                return <Loader />;
-            case "error":
-                return <p>{this.state.error.message}</p>;
             case "success": {
                 let imageForModal = {};
                 if (this.state.modalImageId) {
@@ -134,7 +132,9 @@ class ImageGallery extends Component {
                         {imageDataArray.map((imageData) => <ImageGalleryItem imageData={imageData} key={imageData.id} />)}
                     </ul>
 
-                    {(imageDataArray.length > 0) && <Button onLoadMore={this.nextPage}
+                    { (this.state.status === "loading") && <Loader />}
+
+                    {(imageDataArray.length > 0 && this.state.status === "success") && <Button onLoadMore={this.nextPage}
                         disabled={!(imagesFound > imageDataArray.length)} />}
                     
                     {this.state.showModalImage && <Modal onClose={this.toggleModal}>
@@ -143,6 +143,8 @@ class ImageGallery extends Component {
                 </>
                 );
             }
+            case "error":
+                return <p>{this.state.error.message}</p>;
             default:
                 throw new Error("Incorrect status in state of component <ImageGallery>");
         }
