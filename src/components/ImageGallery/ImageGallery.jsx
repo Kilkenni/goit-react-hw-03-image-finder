@@ -16,7 +16,8 @@ class ImageGallery extends Component {
         error: null,
         status: "idle", // idle|loading|error|success
         showModalImage: false,
-        modalImageId: undefined,
+        modalImage: undefined,
+        modalImageAlt: undefined,
     }
 
     pixabayFetcher = new PixabayFetch();
@@ -47,34 +48,27 @@ class ImageGallery extends Component {
         this.pixabayFetcher.abortFetch();
     }
 
-    toggleModal = (event = null) => {
-        let imageId = undefined;
+    toggleModalImage = (imageID = undefined) => {
 
-        if (event) {
-            
-            let nodeObject = event.target;
-            if (event.target.nodeName === "UL") {
-                return; //ignore clicks in parent DOM element
-            }
+        if (imageID !== undefined) {
+            const modalImageData = this.state.imageDataArray.find((imageData) => {
+                return imageData.id === imageID;
+            });
 
-            while (!imageId) {
-                if (nodeObject.nodeName === "LI") {
-                    imageId = nodeObject.dataset.id;
-                }
-                else {
-                    nodeObject = nodeObject.parentNode;
-                }
-            }
+            this.setState({
+                showModalImage: true,
+                modalImage: modalImageData.largeImageURL,
+                modalImageAlt: modalImageData.tags,
+            });
         }
-        
-        this.setState((prevState) => {
-            return {
-                showModalImage: !prevState.showModalImage,
-                modalImageId: imageId,
-            }
-        });
-    }
-    
+        else {
+            this.setState({
+                showModalImage: false,
+                modalImage: undefined,
+                modalImageAlt: undefined,
+            })
+        }
+    }    
 
     nextPage = () => {
         //switch to next page only if there is one
@@ -103,7 +97,7 @@ class ImageGallery extends Component {
                 });
             }
             this.setState({ error: null, status: "success" });
-            console.log(this.state.imageDataArray);
+            //console.log(this.state.imageDataArray);
         } catch (error) {
             this.setState({ error, status: "error" });    
         }
@@ -116,20 +110,10 @@ class ImageGallery extends Component {
             case "idle":
                 return <></>;
             case "loading":
-            case "success": {
-                let imageForModal = {};
-                if (this.state.modalImageId) {
-                    imageForModal = this.state.imageDataArray.find((imageData) => {
-                        return imageData.id.toString() === this.state.modalImageId;
-                    });
-                    //we need either toString or non-strict comparison to make this work. imageData.id from Pixabay is a number and modalImageId is a string (it's being read from a data attribute from DOM).
-                }
-
-                const { largeImageURL, tags } = imageForModal;
-                
+            case "success": {               
                 return (<>
-                    <ul className={styles.ImageGallery} onClick={this.toggleModal} ref={(galleryUL) => { this.galleryElem = galleryUL }}>
-                        {imageDataArray.map((imageData) => <ImageGalleryItem imageData={imageData} key={imageData.id} />)}
+                    <ul className={styles.ImageGallery} ref={(galleryUL) => { this.galleryElem = galleryUL }}>
+                        {imageDataArray.map((imageData) => <ImageGalleryItem imageData={imageData} key={imageData.id} onModal={this.toggleModalImage} />)}
                     </ul>
 
                     { (this.state.status === "loading") && <Loader />}
@@ -137,8 +121,8 @@ class ImageGallery extends Component {
                     {(imageDataArray.length > 0 && this.state.status === "success") && <Button onLoadMore={this.nextPage}
                         disabled={!(imagesFound > imageDataArray.length)} />}
                     
-                    {this.state.showModalImage && <Modal onClose={this.toggleModal}>
-                        <img src={largeImageURL} alt={ tags } loading="lazy"/>
+                    {this.state.showModalImage && <Modal onClose={this.toggleModalImage}>
+                        <img src={this.state.modalImage} alt={ this.state.modalImageAlt } loading="lazy"/>
                     </Modal>}
                 </>
                 );
@@ -154,6 +138,7 @@ class ImageGallery extends Component {
 
 ImageGallery.propTypes = {
     searchString: propTypes.string,
+    // onModal: propTypes.func.isRequired,
 }
 
 export default ImageGallery;
