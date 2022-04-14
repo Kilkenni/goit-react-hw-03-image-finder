@@ -23,13 +23,13 @@ export default class App extends Component {
   pixabayFetcher = new PixabayFetch();
 
   async componentDidUpdate(prevProps, prevState) {
-    if (prevState.searchString !== this.state.searchString) {
+    if ((prevState.searchString !== this.state.searchString) || (prevState.page !== this.state.page)) {
       this.pixabayFetcher.setSearch(this.state.searchString);
-      this.setState({ page: 1 }); //reset page to 1
+      //await this.setState({ page: 1 }); //reset page to 1
       await this.fetchImages();
     }
-    else if (prevState.page !== this.state.page) {
-      await this.fetchImages();
+    //else if (prevState.page !== this.state.page) {
+      //await this.fetchImages();
       // console.log(`New search string: ${this.props.searchString}`)
 
       /*
@@ -38,7 +38,7 @@ export default class App extends Component {
       //alternative: this.galleryElem.firstElementChild.getBoundingClientRect().height;
       window.scrollBy({ top: cardHeight * 2 * (this.state.page - 1), behavior: "smooth", }); //scrolling down by 2 rows
       */
-    }
+    //}
   }
 
   componentWillUnmount() {
@@ -104,7 +104,7 @@ export default class App extends Component {
   }
 
   onSearch = (searchObject) => {
-    this.setState(searchObject);
+    this.setState({ ...searchObject, page: 1 });
   }
 
   render() {
