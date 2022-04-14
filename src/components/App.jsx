@@ -3,6 +3,8 @@ import React, { Component } from "react";
 import Searchbar from "./Searchbar";
 import ImageGallery from "./ImageGallery";
 import Modal from "./Modal";
+import Button from "components/Button";
+import Loader from "components/Loader";
 import PixabayFetch from "js/Pixabay";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
@@ -84,12 +86,17 @@ export default class App extends Component {
       try {
         const response = await this.pixabayFetcher.fetchImages(this.state.page);
 
+        //pick from response.hits only the fields we actually use to avoid cluttering state
+        const filteredImageDataArray = response.hits.map(({id, largeImageURL, webformatURL, tags}) => {
+          return {id, largeImageURL, webformatURL, tags};
+        });
+
         if (this.state.page === 1) {
-            this.setState({ imageDataArray: response.hits, imagesFound: response.total});
+            this.setState({ imageDataArray: filteredImageDataArray, imagesFound: response.total});
         }
         else {
             this.setState((prevState) => {
-                return { imageDataArray: [...prevState.imageDataArray, ...response.hits], imagesFound: response.total };
+                return { imageDataArray: [...prevState.imageDataArray, ...filteredImageDataArray], imagesFound: response.total };
             });
         }
         this.setState({ error: null, status: "success" });
@@ -137,10 +144,12 @@ export default class App extends Component {
         
         {(this.state.imageDataArray.length > 0) && <ImageGallery
           imageDataArray={this.state.imageDataArray}
-          imagesFound={this.state.imagesFound}
-          onModal={this.toggleModalImage}
-          onNextPage={this.nextPage}
-          loading={this.state.status === "loading"} />}
+          onModal={this.toggleModalImage} />}
+        
+        {(this.state.status === "loading") && <Loader />}
+      
+        {(this.state.status === "success") && <Button onLoadMore={this.nextPage}
+            disabled={!(this.state.imagesFound > this.state.imageDataArray.length)} />}
 
         {this.state.showModalImage && <Modal onClose={this.toggleModalImage}>
             <img src={this.state.modalImage} alt={ this.state.modalImageAlt } loading="lazy"/>
